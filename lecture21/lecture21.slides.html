@@ -16268,6 +16268,1244 @@ GLDAS Noah Land Surface Model L4 3 hourly 1.0 x 1.0 degree V2.0 (GLDAS_NOAH10_3H
 </div>
 </div>
 
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">org_sorted</span> <span class="o">=</span> <span class="n">org_count_abbr</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;count&#39;</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Tracking-the-status-of-datasets">Tracking the status of datasets<a class="anchor-link" href="#Tracking-the-status-of-datasets">&#182;</a></h1><p>The goal of this section is to look at the status of the datasets, and if they are able to be downloaded by following the link.  We can do this by checking the header for a http or ftp request.  Let's make some defs to query the dataset urls.  The first is for converting relative paths to urls, and the second returns the status of the request to that url.</p>
+
+</div>
+</div>
+</div><div class="fragment">
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">reltoabs</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">urlbase</span> <span class="o">=</span> <span class="s2">&quot;https://catalog.data.gov&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Input: url string</span>
+<span class="sd">    Output: url string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">url</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;/&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">urlbase</span><span class="o">+</span><span class="n">url</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">url</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;http:/&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">url</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="n">url</span><span class="p">[</span><span class="mi">6</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">url</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div></div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">testurl</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Input: url</span>
+<span class="sd">    Output: request status code</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">url</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;http&#39;</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span>
+        <span class="k">if</span> <span class="n">url</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ftp&#39;</span><span class="p">:</span>
+            <span class="n">requests_ftp</span><span class="o">.</span><span class="n">monkeypatch_session</span><span class="p">()</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">resp</span><span class="o">.</span><span class="n">status_code</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">ConnectionError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">climate_colls</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">3</span><span class="p">][</span><span class="s1">&#39;label&#39;</span><span class="p">]]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[47]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[&#39;https://scholar.google.com/scholar?q=10.5067%2FASTER%2FASTGTM.003&#39;,
+ &#39;https://doi.org/10.5067/ASTER/ASTGTM.003&#39;,
+ &#39;https://lpdaac.usgs.gov&#39;,
+ &#39;http://asterweb.jpl.nasa.gov/&#39;,
+ &#39;https://search.earthdata.nasa.gov/search?q=C1575726572-LPDAAC_ECS&#39;,
+ &#39;https://lpdaac.usgs.gov/documents/434/ASTGTM_User_Guide_V3.pdf&#39;]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[48]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">urlstats</span><span class="o">=</span><span class="p">[]</span>
+<span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">coll</span> <span class="ow">in</span> <span class="n">climate_colls</span><span class="p">:</span>
+    <span class="n">urlstattemp</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">urlrel</span> <span class="ow">in</span> <span class="n">coll</span><span class="p">[</span><span class="mi">3</span><span class="p">][</span><span class="s1">&#39;label&#39;</span><span class="p">]:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="n">reltoabs</span><span class="p">(</span><span class="n">urlrel</span><span class="p">)</span>
+            <span class="n">urlstatus</span> <span class="o">=</span> <span class="n">testurl</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+            <span class="n">urlstattemp</span> <span class="o">+=</span> <span class="p">[</span><span class="n">urlstatus</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">urlrel</span><span class="p">)</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">e</span><span class="p">,</span><span class="n">urlrel</span><span class="p">))</span>
+    <span class="n">urlstats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">urlstattemp</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>ftp://sidads.colorado.edu/pub/DATASETS/NOAA/G02189/
+ftp://sidads.colorado.edu/pub/DATASETS/NOAA/G02172/
+ftp://sidads.colorado.edu/pub/DATASETS/NOAA/G02182/
+ftp://sidads.colorado.edu/pub/DATASETS/NOAA/G01358/
+ftp://sidads.colorado.edu/DATASETS/NOAA/G02203/
+ftp://sidads.colorado.edu/pub/DATASETS/NOAA/G02171/
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[49]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[49]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>6</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[50]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[50]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(ValueError(&#34;invalid literal for int() with base 10: &#39;226-Options:&#39;&#34;),
+ &#39;ftp://sidads.colorado.edu/pub/DATASETS/NOAA/G02189/&#39;)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can see that urlstats contains the request status of the urls that are listed on data.gov.  So let's make a def that converts each list of status returns into a dict of counts of each type.  This way we can pass it to pd.DataFrame</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[52]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">urlstats</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[52]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[[200, 302, 200, None, 200, 200],
+ [200, 200, 301, 200, 301],
+ [200, 200, 301, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 401, 200, 302],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 301, 401, 200, 301, 401],
+ [200, 200, 401, 200, 200, 401],
+ [200, 200, 401, 200, 302, 302],
+ [200, 302, 302, 302],
+ [200, 200, 401, 200, 302, 302],
+ [200, 401, 200, 302, 302],
+ [200, 301, 200, 302, 302],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 401, 401, 401, 302],
+ [200, 401, 401, 302, 302],
+ [200, 401, 302, 302],
+ [302],
+ [200, 200, 301, 200, 200, 405],
+ [200, 200, 301, 200, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 302, 302],
+ [302],
+ [None],
+ [None],
+ [200, 200, 301, 200, 200, 301],
+ [200, 200, 301, 302, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 301, 401, 200, 301, 401],
+ [200, 200, 301, 200, 302, 302],
+ [200, 401, 302, 302],
+ [200, 301, 401, 301, 401, 301],
+ [200, 401, 302, 302],
+ [200, 401, 401, 302, 302],
+ [301],
+ [200, 200, 401, 200, 302, 302],
+ [200, 401, 302, 302],
+ [200, 401, 302, 302],
+ [200, 401, 302, 302],
+ [200, 302, 302, 302],
+ [200],
+ [301],
+ [200, 200, 301, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 200, 200, 200, 301, 302],
+ [301],
+ [301],
+ [None, 302],
+ [200, 200, 302, 200, 200, 200],
+ [200, 200, 302, 200, 200, 404],
+ [404, 302, 302, 302],
+ [200, 200, 302, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 302, 200, 200],
+ [200, 301, 401, 200, 301, 401],
+ [200, 401, 200, 200, 302, 302],
+ [200, 401, 401, 401, 302, 302],
+ [200, 301, 401, 200, 301, 401],
+ [200, 401, 401, 401, 302, 302],
+ [200, 401, 401, 302, 302],
+ [200, 401, 302, 302],
+ [200, 301, 401, 200, 301, 401],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 401, 200, 401],
+ [200, 401, 200, 401, 200, 302],
+ [200, 200, 401, 200, 302, 302],
+ [200, 401, 302, 302],
+ [200, 301, 401, 200, 302, 302],
+ [200, 401, 302, 302],
+ [200, 301, 200, 200, 302, 302],
+ [200, 301, 200, 200, 302, 302],
+ [302, 302],
+ [302],
+ [302],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 301, 401, 200, 302, 302],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 401, 200, 200, 401],
+ [200, 200, 401, 200, 302, 302],
+ [200, 200, 401, 200, 302, 302],
+ [200, 401, 302, 302],
+ [301],
+ [200, 200, 301, 200, 200, 200],
+ [200, 301, 401, 200, 301, 401],
+ [200, 301, 401, 200, 302, 302],
+ [200, 401, 200, 401, 200, 401],
+ [200, 401, 302, 302],
+ [200, 401, 302, 302],
+ [200, 401, 302, 302],
+ [200, 401, 401, 401, 401, 302],
+ [301],
+ [200, 302, 302, 302],
+ [200, 200, 400],
+ [301],
+ [403],
+ [None],
+ [302],
+ [301],
+ [200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 200, 302, 200, 200],
+ [404, 302, 302, 302],
+ [200, 401, 200, 302, 200, 200],
+ [200, 301, 401, 200, 301, 401],
+ [301],
+ [None],
+ [200, 200, 301, None, 301],
+ [200, 200, 301, 200, 200, 200],
+ [200],
+ [301, 302, 200, 302, 302],
+ [200, 200, 302],
+ [200, 200, 200, 200, 200, 302],
+ [200, 200, 301, 200, 200, 200],
+ [403, 200, 301, 301, 200, 200],
+ [200, 200, 200, 200, 200, 200],
+ [200, 301, 200, 302, 302],
+ [200, 200, 301, 301],
+ [404, 200, None, 301, 200],
+ [200, 200, 302],
+ [200, 200, 200, 200],
+ [],
+ [301],
+ [301],
+ [301],
+ [301],
+ [301],
+ [301],
+ [301],
+ [301],
+ [404, 302, 302, 302],
+ [200, 302, 401, 200, 302],
+ [200, 401, 401, 302, 302],
+ [200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 200, 302, 301, 301, 301],
+ [200, 200, 302, 200, 200, 301],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 301, 200, 302, 302],
+ [302, 302, 302, 302],
+ [302, 302],
+ [301],
+ [301],
+ [301],
+ [301],
+ [301],
+ [200, 200, 302, 200, 200, 200],
+ [200, 200, 302, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 302, 200, 302],
+ [],
+ [200, 200, 301, 301],
+ [None, None, None, None, 301],
+ [200, 200, 200, 200, 200],
+ [200, 200, 200, 200, 200],
+ [200],
+ [200],
+ [200],
+ [200],
+ [200],
+ [301, 301],
+ [301, 301],
+ [301],
+ [301],
+ [200, 200, 302, 200, 200, 200],
+ [200, 401, 200, 302, 302],
+ [301],
+ [301],
+ [200, 301, 200, 302, 302],
+ [200],
+ [302],
+ [],
+ [],
+ [None, None],
+ [None, None],
+ [301, 200, 301],
+ [301, 200, 200, 200],
+ [301, 301, 200],
+ [200],
+ [301, 200, 301],
+ [200],
+ [301],
+ [200],
+ [301],
+ [200, 302, 200, None, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 401, 200, 302, 200, 200],
+ [200, 200, 401, 200, 302, 302],
+ [302],
+ [301],
+ [200, 200],
+ [301],
+ [301],
+ [200, 301, 301, 200],
+ [301, 301, 301, 301, 301, 301],
+ [200, 301],
+ [301],
+ [301],
+ [301],
+ [307],
+ [301],
+ [200, 302, 301, 200, 200, 302],
+ [200, 200, 302, 200, 200, 200],
+ [200, 302, 401, 200, 200, 302],
+ [200, 401, 200, 302, 200, 200],
+ [200, 302, 401, 200, 302],
+ [200, 401, 200, 302, 302],
+ [],
+ [None],
+ [302],
+ [None],
+ [301],
+ [302],
+ [302],
+ [200],
+ [200],
+ [],
+ [200, 200, 200, 301],
+ [200],
+ [302, 302],
+ [302, 302],
+ [302, 302],
+ [301, 301, 301],
+ [200, 200],
+ [200],
+ [301, 302],
+ [302, 302],
+ [400, 400, 400, 400],
+ [302],
+ [301],
+ [302],
+ [302],
+ [302],
+ [302],
+ [301],
+ [None],
+ [302],
+ [302],
+ [],
+ [302],
+ [400, 400, 400, 400],
+ [400, 400, 400, 400],
+ [302],
+ [301],
+ [302],
+ [301],
+ [404, 302],
+ [226],
+ [302],
+ [302, 302],
+ [302, 302],
+ [302],
+ [302, 302],
+ [404, 302, 302],
+ [],
+ [200, 401, 302, 302],
+ [200, 401, 401, 200, 403, 200],
+ [301, 301, 200],
+ [200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 301, 200, 200, 200],
+ [200, 200, 401, 200, 302, 302],
+ [200],
+ [None, 302],
+ [302],
+ [302],
+ [301, 503, 503],
+ [503],
+ [503],
+ [503],
+ [503, 200, 503],
+ [503],
+ [200],
+ [503],
+ [301, 503],
+ [200],
+ [503, 503],
+ [403],
+ [301, 301, 301, 226, 200, 200],
+ [301, 301, 301, 226, 200, 301],
+ [400, 400, 400, 400],
+ [302],
+ [302],
+ [None],
+ [301, 301, 301, 226, 200, 200],
+ [301, 301, 301, 226, 200, 301],
+ [],
+ [400, 400, 400, 400],
+ [400, 400, 400, 400],
+ [200],
+ [200],
+ [200, 200],
+ [200, 200],
+ [200],
+ [200],
+ [200],
+ [200, 302, 200, 226, 200, 301],
+ [301, 301, 301, 404, 404, None],
+ [302, 301, 200, 200, 200, 200],
+ [200, 301, 200, 404, 302, 200],
+ [301, 301, 301, 404, 404, 200],
+ [301, 301, 301, 404, 200, 301],
+ [301, 301, 301, 404, 302, 200],
+ [200, 200, 200, 200],
+ [301, 301, 301, 404, 404, 200],
+ [200],
+ [301, 301, 301, 226, 200, 301],
+ [200, 200],
+ [200],
+ [301, 301, 226],
+ [None, 301, 226],
+ [301, 226],
+ [301, 301, 301, 404, 404, 301],
+ [301, 301, 301, 226, 200, 200],
+ [302, 302, 302],
+ [200, 200, 200, 200, 200, 302],
+ [302, 302, 302, 302],
+ [302, 302, 302, 302],
+ [302, 302, 302, 302],
+ [302, 302, 302, 302],
+ [302, 302, 302, 302],
+ [302, 302, 302, 302, 302, 302],
+ [302, 302, 302, 302, 302, 302],
+ [200, 200, 200, 200, 200, 302],
+ [200, 200, 200, 200, 200, 302],
+ [200, 200, 200, 200, 200, 302],
+ [302, 301, 301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 302, 200, 200],
+ [301, 301, 301, 301],
+ [302],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [302, 301, 302, 200, 200],
+ [302, 302, 301, 200, 301, 301],
+ [302, 301, 200, 301, 301, 200],
+ [302, 301, 200, 301, 301, 200],
+ [301, 200, 200, 200],
+ [301],
+ [301, 301, 301, 301, 301, 301],
+ [301, 200, 200, 200],
+ [301, 301, 301, 301, 301, 301],
+ [302, 200, 200, 200, 200, 200],
+ [301],
+ [302, 200, 200, 200, 200, 200],
+ [200, 301, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [200, 200],
+ [302, 301, 200, 301, 301, 200],
+ [301, 200],
+ [200, 200],
+ [200, 200],
+ [301, 200, 200, 200],
+ [301, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 200, 200, 200],
+ [301, 302, 200, 200, 200, 200],
+ [None],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 301, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, None, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200],
+ [301, 301, 200, 200, 200]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[53]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">convstatnames</span><span class="p">(</span><span class="n">stats</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a dictionary of counts&quot;&quot;&quot;</span>
+    <span class="n">sdict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Counter</span><span class="p">(</span><span class="n">stats</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;status_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">):</span><span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span> <span class="ow">in</span> <span class="n">sdict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+<span class="n">stat_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">convstatnames</span><span class="p">(</span><span class="n">stats</span><span class="p">)</span> <span class="k">for</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">urlstats</span><span class="p">])</span>
+<span class="n">stat_df</span> <span class="o">=</span> <span class="n">stat_df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">stat_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+
+<span class="n">failedstatus</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;status_400&#39;</span><span class="p">,</span><span class="s1">&#39;status_404&#39;</span><span class="p">,</span><span class="s1">&#39;status_405&#39;</span><span class="p">,</span><span class="s1">&#39;status_503&#39;</span><span class="p">,</span><span class="s1">&#39;status_None&#39;</span><span class="p">]</span>
+<span class="n">stat_df</span><span class="p">[</span><span class="s1">&#39;failed ratio&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stat_df</span><span class="p">[</span><span class="n">failedstatus</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">stat_df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We've also created a variable which is the proportion of urls that returned a status in the 400's or 500's or None.  Let's now join this against the climate_df to get one DataFrame of all unique combinations of failed ratio and organization.  Retain only the most common organizations.</p>
+
+</div>
+</div>
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">climate_df</span> <span class="o">=</span> <span class="n">climate_df</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stat_df</span><span class="p">)</span>
+<span class="n">climate_failed</span> <span class="o">=</span> <span class="n">climate_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;organization&#39;</span><span class="p">,</span><span class="s1">&#39;failed ratio&#39;</span><span class="p">])</span>
+<span class="n">failed_count</span> <span class="o">=</span> <span class="n">climate_failed</span><span class="o">.</span><span class="n">count</span><span class="p">()[[</span><span class="s1">&#39;name&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span><span class="s1">&#39;count&#39;</span><span class="p">})</span>
+<span class="n">failed_count</span> <span class="o">=</span> <span class="n">failed_count</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">red_orgs</span> <span class="o">=</span> <span class="n">org_count</span><span class="p">[</span><span class="n">org_count</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+<span class="n">failed_count_red</span> <span class="o">=</span> <span class="n">failed_count</span><span class="p">[[</span><span class="n">org</span> <span class="ow">in</span> <span class="n">red_orgs</span> <span class="k">for</span> <span class="n">org</span> <span class="ow">in</span> <span class="n">failed_count</span><span class="p">[</span><span class="s1">&#39;organization&#39;</span><span class="p">]]]</span>
+<span class="n">failed_count_red</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[54]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>organization</th>
+      <th>failed ratio</th>
+      <th>count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>Department of Agriculture —</td>
+      <td>0.000000</td>
+      <td>56</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Department of Agriculture —</td>
+      <td>0.333333</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Department of Agriculture —</td>
+      <td>0.500000</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Department of Agriculture —</td>
+      <td>1.000000</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>Department of Transportation —</td>
+      <td>0.000000</td>
+      <td>20</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[55]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">climate_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[55]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>name</th>
+      <th>organization</th>
+      <th>description</th>
+      <th>status_200</th>
+      <th>status_302</th>
+      <th>status_None</th>
+      <th>status_301</th>
+      <th>status_401</th>
+      <th>status_405</th>
+      <th>status_404</th>
+      <th>status_400</th>
+      <th>status_403</th>
+      <th>status_307</th>
+      <th>status_226</th>
+      <th>status_503</th>
+      <th>failed ratio</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ASTER Global Digital Elevation Model V003</td>
+      <td>National Aeronautics and Space Administration —</td>
+      <td>The ASTER Global Digital Elevation Model (GDEM...</td>
+      <td>4.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.166667</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>MODIS/Aqua Near Real Time (NRT) Sea Ice Extent...</td>
+      <td>National Aeronautics and Space Administration —</td>
+      <td>MODIS Near Real Time (NRT) Sea Ice Extent 5-Mi...</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>MODIS/Terra+Aqua L3 Value-added Aerosol Optica...</td>
+      <td>National Aeronautics and Space Administration —</td>
+      <td>MODIS was launched aboard the Terra satellite ...</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>NLDAS Mosaic Land Surface Model L4 Hourly 0.12...</td>
+      <td>National Aeronautics and Space Administration —</td>
+      <td>This data set contains a series of land surfac...</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Near-Real-Time SSM/I EASE-Grid Daily Global Ic...</td>
+      <td>National Aeronautics and Space Administration —</td>
+      <td>The Near-real-time Ice and Snow Extent (NISE) ...</td>
+      <td>2.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>1.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[56]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">org_numbers</span> <span class="o">=</span> <span class="p">{</span><span class="n">org_sorted</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">org_sorted</span><span class="p">))}</span>
+<span class="n">failed_count_red</span><span class="p">[</span><span class="s1">&#39;org number&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">failed_count_red</span><span class="p">[</span><span class="s1">&#39;organization&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="n">org_numbers</span><span class="p">[</span><span class="n">o</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/tmp/ipykernel_73749/3929521048.py:2: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  failed_count_red[&#39;org number&#39;] = failed_count_red[&#39;organization&#39;].apply(lambda o: org_numbers[o])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[57]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">failed_count_red</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[57]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>organization</th>
+      <th>failed ratio</th>
+      <th>count</th>
+      <th>org number</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>Department of Agriculture —</td>
+      <td>0.000000</td>
+      <td>56</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Department of Agriculture —</td>
+      <td>0.333333</td>
+      <td>1</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Department of Agriculture —</td>
+      <td>0.500000</td>
+      <td>1</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Department of Agriculture —</td>
+      <td>1.000000</td>
+      <td>3</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>Department of Transportation —</td>
+      <td>0.000000</td>
+      <td>20</td>
+      <td>7</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[58]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">failed_count_red</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[58]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>organization</th>
+      <th>failed ratio</th>
+      <th>count</th>
+      <th>org number</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>Department of Agriculture —</td>
+      <td>0.000000</td>
+      <td>56</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Department of Agriculture —</td>
+      <td>0.333333</td>
+      <td>1</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Department of Agriculture —</td>
+      <td>0.500000</td>
+      <td>1</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Department of Agriculture —</td>
+      <td>1.000000</td>
+      <td>3</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>Department of Transportation —</td>
+      <td>0.000000</td>
+      <td>20</td>
+      <td>7</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div></section></section><section><section>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[61]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+<span class="n">norgs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">org_numbers</span><span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">failed_count_red</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span> <span class="o">=</span> <span class="s1">&#39;org number&#39;</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="s1">&#39;failed ratio&#39;</span><span class="p">,</span><span class="n">xticks</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">norgs</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span>
+                      <span class="n">s</span><span class="o">=</span><span class="n">failed_count_red</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span><span class="o">*</span><span class="mi">10</span><span class="p">,</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;scatter&#39;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">orgname</span><span class="p">,</span><span class="n">i</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">org_numbers</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span><span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">orgname</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>1: National Aeronautics and Space Administration —
+2: Other
+3: Department of Agriculture —
+4: U.S. Environmental Protection Agency —
+5: National Oceanic and Atmospheric Administration, Department of Commerce —
+6: U.S. Department of Health &amp; Human Services —
+7: Department of Transportation —
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+"
+>
+</div>
+
+</div>
+
+</div>
+</div>
+
 </div></section></section>
 </div>
 </div>
